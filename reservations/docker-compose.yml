@@ -1,0 +1,28 @@
+services:
+
+  hotels:
+    image: noerelo/hotels:latest
+    mem_limit: 800m
+    ports:
+      - "8080:8080"
+    networks:
+      - aleal-network
+    
+  rooms:
+    image: noerelo/rooms:latest
+    mem_limit: 800m
+    ports:
+      - "8081:8081"
+    networks:
+      - aleal-network
+    
+  reservations:
+    image: noerelo/reservations:latest
+    mem_limit: 800m
+    ports:
+      - "8082:8082"
+    networks:
+      - aleal-network
+    
+networks:
+  aleal-network:
