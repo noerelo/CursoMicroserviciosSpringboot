@@ -1,0 +1,78 @@
+services:
+
+  configserver:
+    image: noerelo/configserver:latest
+    mem_limit: 800m
+    ports:
+      - "8085:8085"
+    networks:
+      - aleal-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  hotels:
+    image: noerelo/hotels:latest
+    mem_limit: 800m
+    ports:
+      - "8080:8080"
+    networks:
+      - aleal-network
+    depends_on:
+      configserver:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    environment:
+      SPRING_PROFILES_ACTIVE:  dev
+      SPRING_CONFIG_IMPORT: optional:configserver:http://configserver:8085
+
+  rooms:
+    image: noerelo/rooms:latest
+    mem_limit: 800m
+    ports:
+      - "8081:8081"
+    networks:
+      - aleal-network
+    depends_on:
+      configserver:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CONFIG_IMPORT: optional:configserver:http://configserver:8085
+    
+  reservations:
+    image: noerelo/reservations:latest
+    mem_limit: 800m
+    ports:
+      - "8082:8082"
+    networks:
+      - aleal-network
+    depends_on:
+      configserver:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CONFIG_IMPORT: optional:configserver:http://configserver:8085
+    
+networks:
+  aleal-network:
