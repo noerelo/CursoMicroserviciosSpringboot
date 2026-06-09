@@ -14,11 +14,11 @@ services:
       retries: 10
       start_period: 30s
 
-  hotels:
-    image: noerelo/hotels:latest
+  eurekaserver:
+    image: noerelo/eurekaserver:latest
     mem_limit: 800m
     ports:
-      - "8080:8080"
+      - "8065:8065"
     networks:
       - aleal-network
     depends_on:
@@ -31,8 +31,31 @@ services:
         max_attempts: 3
         window: 120s
     environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8085/
+
+  hotels:
+    image: noerelo/hotels:latest
+    mem_limit: 800m
+    ports:
+      - "8080:8080"
+    networks:
+      - aleal-network
+    depends_on:
+      configserver:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    environment:
       SPRING_PROFILES_ACTIVE:  dev
       SPRING_CONFIG_IMPORT: optional:configserver:http://configserver:8085
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8065/eureka/
 
   rooms:
     image: noerelo/rooms:latest
@@ -44,6 +67,8 @@ services:
     depends_on:
       configserver:
         condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
     deploy:
       restart_policy:
         condition: on-failure
@@ -53,6 +78,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_CONFIG_IMPORT: optional:configserver:http://configserver:8085
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8065/eureka/
     
   reservations:
     image: noerelo/reservations:latest
@@ -64,6 +90,8 @@ services:
     depends_on:
       configserver:
         condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
     deploy:
       restart_policy:
         condition: on-failure
@@ -73,6 +101,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_CONFIG_IMPORT: optional:configserver:http://configserver:8085
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8065/eureka/
     
 networks:
   aleal-network:
